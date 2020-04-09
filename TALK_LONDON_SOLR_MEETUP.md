@@ -27,13 +27,13 @@ select(
 )
 
 search(books,
-     q="*:*",
+     q=`"*:*"`,
      rows="1"
 )
 
 _note, don't enable with explanation checkbox_
 random(books,
-     q="*:*",
+     q=`"*:*"`,
      rows="1"
 )
 
