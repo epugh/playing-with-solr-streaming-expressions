@@ -105,8 +105,83 @@ curl 'http://localhost:8983/solr/books/stream?action=START&id=12345'
 curl 'http://localhost:8983/solr/books/stream?action=KILL&id=12345'
 
 
+# Okay, let's talk about Reindexing Your Data
+
+We want to make Author names be case sensitive.  So a query for "card" doesn't match "Card" and vice versa.
+
+## Setting up our Case Sensitive Text field
+
+curl -X POST -H 'Content-type:application/json' --data-binary '{
+  "add-field-type" : {
+     "name":"case_sensitive_field",
+     "class":"solr.TextField",
+     "positionIncrementGap":"100",
+     "analyzer" : {
+        "charFilters":[{
+           "class":"solr.PatternReplaceCharFilterFactory",
+           "replacement":"$1$1",
+           "pattern":"([a-zA-Z])\\\\1+" }],
+        "tokenizer":{
+           "class":"solr.WhitespaceTokenizerFactory" },
+        "filters":[{
+           "class":"solr.WordDelimiterFilterFactory",
+           "preserveOriginal":"0" }]}}
+}' http://localhost:8983/solr/books_copy/schema
+
+curl -X POST -H 'Content-type:application/json' --data-binary '{
+  "add-field":{
+     "name":"author_case_sensitive",
+     "type":"case_sensitive_field",
+     "stored":true,
+     "indexed":true }
+}' http://localhost:8983/solr/books_copy/schema
 
 
+curl -X POST -H 'Content-type:application/json' --data-binary '{
+  "add-copy-field":{
+     "source":"author",
+     "dest":[ "author_case_sensitive"]}
+}' http://localhost:8983/solr/books_copy/schema
+
+## Setting up the Bump Command
+
+curl -X POST -H 'Content-type:application/json' --data-binary '{"add-field": {"name":"bump", "type":"pint", "multiValued":false, "stored":true}}' http://localhost:8983/solr/books_copy/schema
+
+
+curl -X POST -H 'Content-type:application/json'  -d '{
+  "add-expressible": {
+    "name": "bump",
+    "class": "com.o19s.solr.streaming.BumpStream"
+  }
+}' http://localhost:8983/solr/books_copy/config
+
+curl "http://localhost:8983/solr/books_copy/stream?action=plugins" | grep bump
+
+## Now lets bump our Data
+
+commit(books_copy,
+  bump(books_copy,
+    id=id,
+    batchSize=2,
+    select(
+      search(books_copy,qt="/export",q="*:*",fl="id", sort="id asc"),
+      id as id
+    )
+  )
+)
+
+author_case_sensitive:Card   <-- Matches
+author_case_sensitive:card   <-- No Matches
+bump field incremented!
+
+# Lets look at a STreaming Expression!
+
+convertTupleToSolrDocument Method
+read Method
+
+createBatchSummaryTuple Method
+
+public BumpStream() method
 
 
 # Useful Links
