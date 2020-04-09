@@ -1,7 +1,5 @@
 package com.o19s.solr.streaming;
 
-import static org.apache.solr.common.params.CommonParams.VERSION_FIELD;
-
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -20,7 +18,6 @@ import org.apache.solr.client.solrj.io.comp.StreamComparator;
 import org.apache.solr.client.solrj.io.stream.PushBackStream;
 import org.apache.solr.client.solrj.io.stream.StreamContext;
 import org.apache.solr.client.solrj.io.stream.TupleStream;
-import org.apache.solr.client.solrj.io.stream.UpdateStream;
 import org.apache.solr.client.solrj.io.stream.expr.Explanation;
 import org.apache.solr.client.solrj.io.stream.expr.Expressible;
 import org.apache.solr.client.solrj.io.stream.expr.StreamExplanation;
@@ -54,6 +51,7 @@ public class BumpStream extends TupleStream implements Expressible {
 
 	public BumpStream(StreamExpression expression, StreamFactory factory) throws IOException {
 		log.error("\n\nConfiguring BumpStream\n\n\n");
+		
 		String collectionName = factory.getValueOperand(expression, 0);
 		verifyCollectionName(collectionName, expression);
 
@@ -306,12 +304,6 @@ public class BumpStream extends TupleStream implements Expressible {
 		log.error("Tuple [{}] was converted into SolrInputDocument [{}].", tuple, doc);
 
 		return doc;
-	}
-
-	private void addMultivaluedField(SolrInputDocument doc, String fieldName, List<Object> values) {
-		for (Object value : values) {
-			doc.addField(fieldName, value);
-		}
 	}
 
 	private void uploadBatchToCollection(List<SolrInputDocument> documentBatch) throws IOException {
