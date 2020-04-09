@@ -17,7 +17,7 @@ docker run --rm -v "$PWD/temp:/target" --network=playing-with-solr-streaming-exp
 
 # Let's do the Hello World
 
-### Hello World
+## Hello World
 
 echo("hello world")
 
@@ -37,7 +37,10 @@ random(books,
      rows="1"
 )
 
-### Okay, lets make a new data set.
+curl --data-urlencode 'expr=search(books, q="*:*")' http://localhost:8983/solr/books/stream  
+
+
+# Okay, lets make a new data set.
 
 Just books that are in stock!
 
@@ -61,7 +64,7 @@ commit(books_instock,
   )
 )
 
-### How about a random sample set?
+## How about a random sample set?
 
 commit(books_instock,
   update(books_instock,
@@ -73,6 +76,34 @@ commit(books_instock,
 )
 
 
+## What about keeping one collection up to date with another?
+
+docker exec solr1 solr create_collection -c books_copy -p 8983 -shards 3
+
+daemon(
+  id="12345",
+  runInterval="15000",
+  commit(books_copy,
+    update(books_copy,
+      random(books,
+           q="*:*",
+           rows="1"
+      )
+    )
+  )
+)
+
+### Quick Detour into Lifecycle of a Daemon
+curl 'http://localhost:8983/solr/books/stream?action=LIST'
+
+curl 'http://localhost:8983/solr/books_copy/stream?action=LIST'
+
+curl 'http://localhost:8983/solr/books/stream?action=STOP&id=12345'
+
+curl 'http://localhost:8983/solr/books/stream?action=START&id=12345'
+
+curl 'http://localhost:8983/solr/books/stream?action=KILL&id=12345'
+
 
 
 
@@ -81,5 +112,8 @@ commit(books_instock,
 # Useful Links
 https://lucene.apache.org/solr/guide/8_5/streaming-expressions.html
 https://github.com/apache/lucene-solr/blob/visual-guide/solr/solr-ref-guide/src/math-expressions.adoc#streaming-expressions-and-math-expressions
+https://github.com/apache/lucene-solr/blob/visual-guide/solr/solr-ref-guide/src/logs.adoc#log-analytics
 https://twitter.com/jbernste2
 https://joelsolr.blogspot.com/2020/03/new-york-coronavirus-statistics-nytimes.html
+https://rodrite.github.io/solr-topic-stream-function/
+https://sematext.com/blog/solr-streaming-expressions-reindexing/
