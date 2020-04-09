@@ -6,7 +6,7 @@
 
   <groupId>com.o19s.solr.streaming</groupId>
   <artifactId>streaming-expressions</artifactId>
-  <version>1.0.0-solr8.4.0-SNAPSHOT</version>
+  <version>1.0.0-solr8.5.0-SNAPSHOT</version>
 
   <name>streaming-expressions</name>
   <url>https://github.com/epugh/playing-with-solr-streaming-expressions</url>
@@ -18,7 +18,7 @@
 
     <junit.version>4.11</junit.version>
     <slf4j.version>1.7.7</slf4j.version>
-    <solr.version>8.4.1</solr.version>
+    <solr.version>8.5.0</solr.version>
   </properties>
 
   <dependencies>
