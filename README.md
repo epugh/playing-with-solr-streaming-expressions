@@ -1,13 +1,14 @@
 ## Setting up Sample Solr Cluster
 
 ```
-docker-compose up
+docker-compose up --build
 
-docker exec solr1 solr create_collection -c books -p 8983
+docker exec solr1 solr create_collection -c books -p 8983 -shards 3
 
-wget -O target/books.csv https://raw.githubusercontent.com/apache/lucene-solr/master/solr/example/exampledocs/books.csv
+mkdir temp
+wget -O temp/books.csv https://raw.githubusercontent.com/apache/lucene-solr/master/solr/example/exampledocs/books.csv
 
-docker run --rm -v "$PWD/target:/target" --network=solr-streaming-expressions_solr solr:8 post -c books /target/books.csv -host solr1
+docker run --rm -v "$PWD/temp:/target" --network=playing-with-solr-streaming-expressions_solr solr:8 post -c books /target/books.csv -host solr1
 ```
 
 ## Configure Solr to use new Jar
@@ -26,34 +27,23 @@ curl -X POST -H 'Content-type:application/json'  -d '{
     "name": "bump",
     "class": "com.o19s.solr.streaming.BumpStream"
   }
-}' http://localhost:8983/solr/gettingstarted/config
+}' http://localhost:8983/solr/books/config
 ```
 
-This only works in Solr 8.5
+Confirm it's there via:
+
 ```
-curl -X POST -H 'Content-type:application/json'  -d '{
-  "add-expressible": {
-    "name": "dog",
-    "class": "org.apache.solr.handler.CatStream"
-  }
-}' http://localhost:8983/solr/gettingstarted/config
+curl 'http://localhost:8983/solr/books/stream?action=PLUGINS' | grep bump
 ```
 
-To replace it do:
-```
-curl -X POST -H 'Content-type:application/json'  -d '{
-  "update-expressible": {
-    "name": "dog",
-    "class": "org.apache.solr.handler.AnalyzeEvaluator"
-  }
-}' http://localhost:8983/solr/gettingstarted/config
-```
+
+http://localhost:8983/solr/gettingstarted/stream?action=PLUGINS
 
 To delete it do:
 ```
 curl -X POST -H 'Content-type:application/json'  -d '{
-  "delete-expressible": "dog"
-}' http://localhost:8983/solr/gettingstarted/config
+  "delete-expressible": "bump"
+}' http://localhost:8983/solr/books/config
 ```
 
 Create the bump field using the API.
@@ -110,3 +100,8 @@ curl -X POST -H 'Content-type:application/json'  -d '{
 ```
 curl http://localhost:8983/solr/gettingstarted/stream?action=plugins
 ```
+
+
+## Notes
+
+* The `fq` parameter isn't documented for https://lucene.apache.org/solr/guide/8_5/stream-source-reference.html#search-parameters.   Wonder what others aren't, and how to convey them better?
