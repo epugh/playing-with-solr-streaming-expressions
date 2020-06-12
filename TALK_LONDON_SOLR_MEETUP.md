@@ -1,6 +1,8 @@
 London Solr Meetup Talk
 --------------------------
 
+https://github.com/epugh/playing-with-solr-streaming-expressions/blob/master/TALK_LONDON_SOLR_MEETUP.md
+
 
 # Setting up
 
