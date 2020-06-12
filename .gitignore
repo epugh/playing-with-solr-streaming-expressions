@@ -1,5 +1,10 @@
+books.csv
+
 .DS_Store
 streaming_expressions/target/
 streaming_expressions/.classpath
 streaming_expressions/.project
-streaming_expressions/.settings/
+streaming_expressions/.settings
+
+# ignore items in the fake NAS
+volumes/fake_shared_fs
