@@ -165,3 +165,32 @@ Now, let's look at our distribution!
 ```
 search(query_pairs_df, q="query_str:"real estate"", sort="query_str desc, count desc")
 ```
+
+
+Lets get Zeppy!
+
+>  wget http://apache.spinellicreations.com/zeppelin/zeppelin-0.9.0-preview1/zeppelin-0.9.0-preview1-bin-netinst.tgz
+
+ unzip it
+
+ ```
+ cd zeppelin-0.9.0-preview1-bin-netinst
+ ./bin/zeppelin-daemon.sh start
+ ```
+
+ Go check out http://localhost:8080
+
+Now install Zeppelin Solr interpreter
+Go install locally the upgrade.
+https://github.com/o19s/zeppelin-solr/tree/upgrade-zeppelin-0.9.0-preview
+
+> mvn clean package install
+
+ > ./bin/install-interpreter.sh --name solr --artifact com.lucidworks.zeppelin:zeppelin-solr:0.1.7-SNAPSHOT
+
+ > ./bin/zeppelin-daemon.sh restart
+
+Default solr collection
+```
+docker exec solr1 solr create_collection -c collection1 -p 8983 -shards 1
+```
