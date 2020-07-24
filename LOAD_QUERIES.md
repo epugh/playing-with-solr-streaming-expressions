@@ -11,7 +11,7 @@ docker exec solr1 solr create_collection -c real_estate -p 8983 -shards 3
 
 wget https://raw.githubusercontent.com/searchintuition/query_log_insights_presentation/master/data/real_estate_queries.tsv
 
-docker cp real_estate_queries.tsv solr3:/var/solr/data/userfiles/
+docker cp real_estate_queries.tsv solr1:/var/solr/data/userfiles/
 
 ```
 
@@ -194,3 +194,47 @@ Default solr collection
 ```
 docker exec solr1 solr create_collection -c collection1 -p 8983 -shards 1
 ```
+
+
+ResponseLogComponent:
+
+responselog
+
+```
+curl -X POST -H 'Content-type:application/json' -d '{
+  "add-searchcomponent": {
+    "name": "responselog",
+    "class": "org.apache.solr.handler.component.ResponseLogComponent"
+  }
+}' http://localhost:9983/solr/real_estate/config
+
+```
+
+Next, you need to update the request handler to use the component.
+
+Not totally sure about how to do this with cloud mode and the default config.
+
+```
+curl -X POST -H 'Content-type:application/json' -d '{
+  "update-requesthandler": {
+    "name": "/querqy-select",
+    "class": "solr.SearchHandler"
+    "defaults": {
+      "echoParams": explicit,
+      "indent": true,
+      "df": "id",
+      "qf": "name title product_type short_description ean search_attributes",
+      "defType": "querqy",
+      "tie": 0.01,
+      "mm": "100&#37;",
+      "responseLog": true
+      },
+    "last-components": ["responselog"]
+  }
+}' http://localhost:8983/solr/ecommerce/config
+
+```
+
+> docker exec -it a053d8591267 bash bin/postlogs
+
+> docker exec -it a053d8591267 bash bin/postlogs http://localhost:8983/solr/logs /var/solr/logs/solr.log
