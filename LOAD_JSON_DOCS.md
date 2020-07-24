@@ -26,3 +26,40 @@ cat('two_docs.jsonl',  maxLines=500)
 ```
 
 # Register the expression.
+
+```
+curl -X POST -H 'Content-type:application/json'  -d '{
+  "add-expressible": {
+    "name": "parseJSONL",
+    "class": "com.o19s.solr.streaming.JSONLStream"
+  }
+}' http://localhost:9981/solr/icecat/config
+```
+
+Confirm it's there via:
+
+```
+curl 'http://localhost:9981/solr/icecat/stream?action=PLUGINS' | grep JSONL
+```
+
+```
+curl http://localhost:9981/solr/icecat/stream --data-urlencode 'expr=
+parseJSONL(
+  cat('two_docs.jsonl',  maxLines=500)
+)
+'
+```
+
+The whole thing:
+
+```
+curl http://localhost:9981/solr/icecat/stream --data-urlencode 'expr=
+commit(icecat,
+  update(icecat,
+    parseJSONL(
+      cat('two_docs.jsonl',  maxLines=500)
+    )
+  )
+)
+'
+```
