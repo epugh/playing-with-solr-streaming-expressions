@@ -8,7 +8,7 @@ services:
     #image: solr:8
     build: ./solr
     ports:
-     - "8981:8983"
+     - "9981:8983"
     environment:
       - ZK_HOST=zoo1:2181,zoo2:2181,zoo3:2181
     volumes:
@@ -25,7 +25,7 @@ services:
     #image: solr:8
     build: ./solr
     ports:
-     - "8982:8983"
+     - "9982:8983"
     environment:
       - ZK_HOST=zoo1:2181,zoo2:2181,zoo3:2181
     volumes:
@@ -42,11 +42,9 @@ services:
     #image: solr:8
     build: ./solr
     ports:
-     - "8983:8983"
+     - "9983:8983"
     environment:
       - ZK_HOST=zoo1:2181,zoo2:2181,zoo3:2181
-    ports:
-      - 8983:8983
     volumes:
       - ./volumes/fake_shared_fs:/tmp/fake_shared_fs
     networks:
