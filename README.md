@@ -5,7 +5,6 @@ docker-compose up --build
 
 docker exec solr1 solr create_collection -c books -p 8983 -shards 3
 
-mkdir temp
 wget books.csv https://raw.githubusercontent.com/apache/lucene-solr/master/solr/example/exampledocs/books.csv
 
 docker run --rm -v "$PWD/temp:/target" --network=playing-with-solr-streaming-expressions_solr solr:8 post -c books /target/books.csv -host solr1
