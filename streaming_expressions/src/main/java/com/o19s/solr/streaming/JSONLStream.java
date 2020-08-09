@@ -41,7 +41,6 @@ import org.noggit.ObjectBuilder;
 public class JSONLStream extends TupleStream implements Expressible {
 
   private static final long serialVersionUID = 1;
-  //private String[] headers;
   private String currentFile;
   private int lineNumber;
 
@@ -82,7 +81,7 @@ public class JSONLStream extends TupleStream implements Expressible {
         expression.addParameter(((Expressible)originalStream).toExpression(factory));
       }
       else{
-        throw new IOException("This JSONStream contains a non-expressible TupleStream - it cannot be converted to an expression");
+        throw new IOException("This JSONLStream contains a non-expressible TupleStream - it cannot be converted to an expression");
       }
     }
     else{
@@ -132,39 +131,21 @@ public class JSONLStream extends TupleStream implements Expressible {
     } else {
       String file = formatFile(tuple.getString("file"));
       String line = tuple.getString("line");
-      
-      
-      
+
       if (!file.equals(currentFile)) {
           this.currentFile = file;
-          //this.headers = split(line);
           this.lineNumber = 1; //New file so reset the lineNumber
       }
-    	  
-        //if(fields.length != headers.length) {
-        //  throw new IOException("Headers and lines must have the same number of fields [file:"+file+" line number:"+lineNumber+"]");
-        //}
-        //Tuple out = new Tuple();
-        
-        
-        //JSONParser parser = new JSONParser(line);
-        System.out.println("Here is the line:" + line);
-        Object o = ObjectBuilder.fromJSON(line);
-        // right now, getVal will leave the last event read as OBJECT_END
 
-        Tuple out = new Tuple((Map)o);
-        out.put("id", file+"_"+lineNumber);
-        
-        
-        
-        /*for(int i=0; i<headers.length; i++) {
-          if(fields[i] != null && fields[i].length() > 0) {
-            out.put(headers[i], fields[i]);
-          }
-        }
-        */
-        return out;
-     
+      //JSONParser parser = new JSONParser(line);
+      //System.out.println("Here is the line:" + line);
+      Object o = ObjectBuilder.fromJSON(line);
+
+      Tuple out = new Tuple((Map)o);
+      out.put("id", file+"_"+lineNumber);
+
+      return out;
+
     }
   }
 
