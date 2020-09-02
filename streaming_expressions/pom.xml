@@ -19,6 +19,7 @@
     <junit.version>4.11</junit.version>
     <slf4j.version>1.7.7</slf4j.version>
     <solr.version>8.5.0</solr.version>
+    <tika.version>1.24</tika.version>
   </properties>
 
   <dependencies>
@@ -58,6 +59,16 @@
       <artifactId>solr-core</artifactId>
       <version>${solr.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-core</artifactId>
+      <version>${tika.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-serialization</artifactId>
+      <version>${tika.version}</version>
+    </dependency>    
   </dependencies>
 
   <build>
