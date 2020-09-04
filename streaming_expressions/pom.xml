@@ -68,7 +68,12 @@
       <groupId>org.apache.tika</groupId>
       <artifactId>tika-serialization</artifactId>
       <version>${tika.version}</version>
-    </dependency>    
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-parsers</artifactId>
+      <version>${tika.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
