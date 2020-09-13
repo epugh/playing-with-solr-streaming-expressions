@@ -2,7 +2,9 @@ package fork.org.tallison.tikaeval.example;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -20,10 +22,27 @@ public class TikaServerClientTest {
         
         TikaInputStream stream = TikaInputStream.get(pdfFile);
         List<Metadata> results = client.parse(pdfFile.toString(), stream);
-        System.out.println(results);
+       // System.out.println(results);
+   
+        int numberofNerEntries = 0;
+        
+        Set nerEntities = new HashSet();
         for (Metadata result: results) {
-        	System.out.println(result);
-        }   
+        	
+        	for (String name: result.names()) {
+        		System.out.println(name + ": " + result.getValues(name));
+        		if (name.startsWith("NER")) {
+        			nerEntities.add(name);
+        			numberofNerEntries = numberofNerEntries + result.getValues(name).length;
+        		}
+        		
+        	}
+        }
+        System.out.println("Number of Entities Seen: " + numberofNerEntries);
+        System.out.println("Number of Entity Types Discovered: " + nerEntities.size() + "," + nerEntities.toString());
+      
+        
+        
     };
     
     @Test(expected = TikaClientException.class)

@@ -41,13 +41,12 @@ import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-
 /**
- * This class offers an implementation of {@link NERecogniser} based on
- * spaCy. This NER requires additional setup, due to Http
- * requests to an endpoint server that runs spaCy as a RESTful service: https://github.com/jgontrum/spacy-api-docker
- * See (Someday!) <a href="http://wiki.apache.org/tika/TikaAndspaCy">
+ * This class offers an implementation of {@link NERecogniser} based on spaCy.
+ * This NER requires additional setup, due to Http requests to an endpoint
+ * server that runs spaCy as a RESTful service:
+ * https://github.com/jgontrum/spacy-api-docker See (Someday!)
+ * <a href="http://wiki.apache.org/tika/TikaAndspaCy">
  *
  */
 public class SpacyNERecogniser implements NERecogniser {
@@ -82,14 +81,19 @@ public class SpacyNERecogniser implements NERecogniser {
 			}
 
 			URI versionUrl = URI.create(restHostUrlStr + "/version");
-           
 
-            DefaultHttpClient client = new DefaultHttpClient();
-            HttpResponse response = client.execute(new HttpGet(versionUrl));
-            available = response.getStatusLine().getStatusCode() == 200;
+			String status;
+			DefaultHttpClient client = new DefaultHttpClient();
+			try {
+				HttpResponse response = client.execute(new HttpGet(versionUrl));
+				available = response.getStatusLine().getStatusCode() == 200;
+				status = response.getStatusLine().toString();
+			} catch (java.net.ConnectException ce) {
+				available = false;
+				status = ce.getMessage();
+			}
 
-            LOG.info("Spacy Server Available = {}, API Status = {}", available, response.getStatusLine());
-            		
+			LOG.info("Spacy Server at {}, Available = {}, API Status = {}", restHostUrlStr, available, status);
 
 		} catch (Exception e) {
 			LOG.warn(e.getMessage(), e);
@@ -130,30 +134,27 @@ public class SpacyNERecogniser implements NERecogniser {
 		Map<String, Set<String>> entities = new HashMap<>();
 		text = text.replace("\n", " ").replace("\r", " ").replace("\"", ""); // Spacy API doesn't like CRLF
 		text = new String(text.getBytes(), StandardCharsets.US_ASCII); // Remove any é characters.
-		//text = "Pastafarians are smarter than people with Coca Cola bottles";
+		// text = "Pastafarians are smarter than people with Coca Cola bottles";
 		try {
 			String url = restHostUrlStr + "/ent";
 
 			DefaultHttpClient client = new DefaultHttpClient();
-			
-			
+
 			HttpPost httpPost = new HttpPost(url);
-			
+
 			String json = "{\"text\":\"" + text + "\",\"model\":\"en\"}";
-		    StringEntity entity = new StringEntity(json);
-		    httpPost.setEntity(entity);
-		    httpPost.setHeader("Accept", "application/json");
-		    httpPost.setHeader("Content-type", "application/json");
-		
-			
-		    CloseableHttpResponse response = client.execute(httpPost);
-		    
+			StringEntity entity = new StringEntity(json);
+			httpPost.setEntity(entity);
+			httpPost.setHeader("Accept", "application/json");
+			httpPost.setHeader("Content-type", "application/json");
+
+			CloseableHttpResponse response = client.execute(httpPost);
 
 			int responseCode = response.getStatusLine().getStatusCode();
-			//String result = EntityUtils.toString(response.getEntity());
+			// String result = EntityUtils.toString(response.getEntity());
 			if (responseCode == 200) {
 				String result = EntityUtils.toString(response.getEntity());
-				//System.out.println(result);
+				// System.out.println(result);
 				JSONParser parser = new JSONParser();
 				JSONArray j = (JSONArray) parser.parse(result);
 				Iterator<?> keys = j.iterator();

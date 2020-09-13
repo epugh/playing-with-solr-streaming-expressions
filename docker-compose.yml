@@ -3,6 +3,25 @@
 
 version: '3.7'
 services:
+
+  tika1:
+    container_name: tika1
+    build: ./tika-to-the-max
+    ports:
+     - "9998:9998"
+    networks:
+      - solr
+    depends_on:
+      - spacy
+
+  spacy:
+    container_name: spacy
+    image: jgontrum/spacyapi:en_v2
+    ports:
+     - "8080:80"
+    networks:
+      - solr
+
   solr1:
     container_name: solr1
     #image: solr:8
