@@ -64,27 +64,166 @@ topic(cp2,
 )
 ```
 
+Try exporting
+
+bin/solr export -fields id,name -format javabin -limit 100 -url http://localhost:8983/solr/ecommerce -verbose
+
 ```
-top(
-  n=10,
-  topic(cp2,
-        ecommerce,
-        q="id:9*",
-        fl="id,name,title,ean,price,short_description,img_high,img_low,img_500x500,img_thumb,date_released,supplier",
-        id="topic_ecomm3",
-        initialCheckpoint=0
-  ),
-  sort="id ASC"
+# first dump main data
+bin/solr export -fields id,name,title,ean,price,short_description,img_high,img_low,img_500x500,img_thumb,date_released,supplier -format javabin -limit -1 -url http://solr1:8983/solr/ecommerce  -out /tmp/fake_shared_fs/ecom_dump_main.javabin -verbose
+
+# now dump attributes
+bin/solr export -fields id,attr_* -format javabin -limit -1 -url http://solr1:8983/solr/ecommerce  -out /tmp/fake_shared_fs/ecom_dump_attributes.javabin -verbose
+```
+
+what about json.gz format?
+```
+# first dump main data
+bin/solr export -fields id,name,title,ean,price,short_description,img_high,img_low,img_500x500,img_thumb,date_released,supplier -format jsonl -limit -1 -url http://solr1:8983/solr/ecommerce  -out /tmp/fake_shared_fs/ecom_dump_main.json.gz -verbose
+
+# now dump attributes
+bin/solr export -fields id,attr_* -format jsonl -limit -1 -url http://solr1:8983/solr/ecommerce  -out /tmp/fake_shared_fs/ecom_dump_attributes.json.gz -verbose
+```
+
+Smallest!
+
+curl -X POST -d @/Users/epugh/Documents/projects/chorus/volumes/fake_shared_fs/ecom_dump_main.jsonl http://localhost:8983/solr/test_load/update/json/docs?commit=true
+
+Pukes on jsonl!
+
+curl -X POST --header "Content-Type: application/javabin" --data-binary @/Users/epugh/Documents/projects/chorus/volumes/fake_shared_fs/ecom_dump_main.javabin http://localhost:8983/solr/test_load/update?commit=true
+
+
+
+
+Okay, lets try JSONLStream!
+
+curl "http://localhost:8983/solr/ecomm3/stream?action=plugins" | grep jsonl
+
+curl -X POST -H 'Content-type:application/json'  -d '{
+  "add-expressible": {
+    "name": "jsonl",
+    "class": "com.o19s.solr.streaming.JSONLStream"
+  }
+}' http://localhost:8983/solr/ecomm3/config
+
+
+
+Holy smokes!
+```
+jsonl(
+  cat("ecom_dump_main.jsonl")
 )
-
 ```
 
-list(
-  topic(cp2,
-        ecommerce,
-        q="id:9*",
-        fl="id,name,title,ean,price,short_description,img_high,img_low,img_500x500,img_thumb,date_released,supplier",
-        id="topic_ecomm3",
-        initialCheckpoint=0
+
+Holy smokes!
+```
+select(
+  jsonl(
+    cat("ecom_dump_main.jsonl")
+  ),
+  id,
+  name
+)
+```
+
+```
+select(
+  jsonl(
+    cat("ecom_dump_attributes.jsonl")
+  ),
+  id
+)
+```
+
+Not in same order...   
+
+```
+hashJoin(
+  select(
+    jsonl(
+      cat("ecom_dump_main.jsonl")
+    ),
+    id,
+    name
+  ),
+  hashed=select(
+    jsonl(
+      cat("ecom_dump_attributes.jsonl")
+    ),
+    id
+  ),
+  on="id"
+)
+```
+
+OMG WORKING!
+```
+hashJoin(
+  jsonl(
+    cat("ecom_dump_main.jsonl")
+  ),
+  hashed=jsonl(
+      cat("ecom_dump_attributes.jsonl")
+  ),
+  on="id"
+)
+```
+
+
+Okay, save it!
+
+```
+commit(ecomm3,
+  update(ecomm3,
+    hashJoin(
+      jsonl(
+        cat("ecom_dump_main.jsonl")
+      ),
+      hashed=jsonl(
+          cat("ecom_dump_attributes.jsonl")
+      ),
+      on="id"
+    )
   )
 )
+```
+
+how fast can we do it
+
+```
+time curl http://localhost:8983/solr/ecomm3/stream --data-urlencode 'expr=
+update(ecomm4,
+  hashJoin(
+    jsonl(
+      cat("ecom_dump_main.json.gz")
+    ),
+    hashed=jsonl(
+        cat("ecom_dump_attributes.json.gz")
+    ),
+    on="id"
+  )
+)
+'
+```
+
+takes 11 or 12 seconds.
+
+```
+time curl http://localhost:8983/solr/ecomm3/stream --data-urlencode 'expr=
+update(ecomm4,
+  hashJoin(
+    jsonl(
+      cat("ecom_dump_main.jsonl")
+    ),
+    hashed=jsonl(
+        cat("ecom_dump_attributes.jsonl")
+    ),
+    on="id"
+  )
+)
+'
+```
+
+takes 13 or 14 seconds

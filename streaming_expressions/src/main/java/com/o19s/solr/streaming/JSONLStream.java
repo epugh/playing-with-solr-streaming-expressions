@@ -142,7 +142,11 @@ public class JSONLStream extends TupleStream implements Expressible {
       Object o = ObjectBuilder.fromJSON(line);
 
       Tuple out = new Tuple((Map)o);
-      out.put("id", file+"_"+lineNumber);
+      
+      // Set a id based on the file and the line number if we don't have one defined already.
+      if (out.get("id") == null) {
+    	  out.put("id", file+"_"+lineNumber);
+      }
 
       return out;
 
