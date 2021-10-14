@@ -173,30 +173,26 @@ public class DogStream extends TupleStream implements Expressible {
 
 	@Override
 	public void open() throws IOException {
-//    setCloudSolrClient();
 		setupFileWriter();
 		tupleSource.open();
 	}
 
 	private void setupFileWriter() {
 
+		System.out.println("\\n\\n\\n\\n\\nAbout to setup the File Writer\n\n\n\n\n");
 		Path fileToWrite = chroot.resolve(filepath).normalize();
 		if (!fileToWrite.startsWith(chroot)) {
 			throw new SolrException(SolrException.ErrorCode.BAD_REQUEST,
 					"file/directory to stream must be under " + chroot);
 		}
 
-		// if ( Files.exists(fileToWrite)) {
-		// throw new SolrException(SolrException.ErrorCode.BAD_REQUEST,
-		// "file/directory to stream doesn't exist: " + crawlRootStr);
-		// }
 
 		try {
-			fos = new FileOutputStream(fileToWrite.toFile());
+			fos = new FileOutputStream(fileToWrite.toFile(), true);
 		} catch (FileNotFoundException e) {
 			throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "Couldn't write to file " + fileToWrite);
 		}
-		if (fileToWrite.endsWith(".gz"))
+		if (fileToWrite.getFileName().toString().endsWith(".gz"))
 			try {
 				fos = new GZIPOutputStream(fos);
 			} catch (IOException e) {
@@ -207,12 +203,12 @@ public class DogStream extends TupleStream implements Expressible {
 			fos = new BufferedOutputStream(fos, bufferSize);
 		}
 		writer = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
+	
 
 	}
 
 	@Override
 	public Tuple read() throws IOException {
-
 		for (int i = 0; i < updateBatchSize; i++) {
 			Tuple tuple = tupleSource.read();
 			if (tuple.EOF) {
@@ -243,6 +239,9 @@ public class DogStream extends TupleStream implements Expressible {
 	}
 
 	private void closeFileWriter() throws IOException {
+		
+		System.out.println("\\n\\n\\n\\n\\nAbout to CLOSE the File Writer\n\n\n\n\n");
+		
 		writer.flush();
 		fos.flush();
 		fos.close();
@@ -288,9 +287,9 @@ public class DogStream extends TupleStream implements Expressible {
 	@Override
 	public Explanation toExplanation(StreamFactory factory) throws IOException {
 
-		// An update stream is backward wrt the order in the explanation. This stream is
+		// An dog stream is backward wrt the order in the explanation. This stream is
 		// the "child"
-		// while the collection we're updating is the parent.
+		// while the file we're saving is the parent.
 
 		StreamExplanation explanation = new StreamExplanation(getStreamNodeId() + "-datastore");
 
@@ -314,7 +313,7 @@ public class DogStream extends TupleStream implements Expressible {
 
 	@Override
 	public void setStreamContext(StreamContext context) {
-		this.tupleSource.setStreamContext(context);
+		//this.tupleSource.setStreamContext(context);
 		this.coreName = (String) context.get("core");
 		final SolrCore core = (SolrCore) context.get("solr-core");
 
@@ -325,7 +324,7 @@ public class DogStream extends TupleStream implements Expressible {
 
 		if (!Files.exists(chroot)) {
 			throw new IllegalStateException(
-					chroot + " directory used to load files must exist but could not be found!");
+					chroot + " directory used to save files must exist but could not be found!");
 		}
 		this.tupleSource.setStreamContext(context);
 	}
@@ -394,6 +393,7 @@ public class DogStream extends TupleStream implements Expressible {
 	 * converting each tuple in that batch to a JSON Document.
 	 */
 	protected void uploadBatchToCollection(List<SolrInputDocument> documentBatch) throws IOException {
+		System.out.println("About to uploadBatch to Collection, docbatch size is " + documentBatch.size());
 		if (documentBatch.size() == 0) {
 			return;
 		}
@@ -437,6 +437,7 @@ public class DogStream extends TupleStream implements Expressible {
 
 	// Copied from the ExportTool
 	public synchronized void accept(SolrDocument doc) throws IOException {
+		
 		charArr.reset();
 		Map<String, Object> m = new LinkedHashMap<>(doc.size());
 		doc.forEach((s, field) -> {
@@ -458,10 +459,11 @@ public class DogStream extends TupleStream implements Expressible {
 			}
 			m.put(s, field);
 		});
+
 		jsonWriter.write(m);
 		writer.write(charArr.getArray(), charArr.getStart(), charArr.getEnd());
 		writer.append('\n');
-		// super.accept(doc);
+		
 	}
 
 	private boolean hasdate(List<?> list) {

@@ -265,14 +265,14 @@ daemon(id="ecomm2",
 
 # Setup the DogStream
 
-curl "http://localhost:8983/solr/ecommerce/stream?action=plugins" | grep dog
+curl "http://localhost:8983/solr/worker/stream?action=plugins" | grep dog
 
 curl -X POST -H 'Content-type:application/json'  -d '{
   "add-expressible": {
     "name": "dog",
     "class": "com.o19s.solr.streaming.DogStream"
   }
-}' http://localhost:8983/solr/ecommerce/config
+}' http://localhost:8983/solr/worker/config
 
 
 
@@ -289,16 +289,16 @@ dog("output.jsonl.gz",
 ```
 
 ```
-daemon(id="ecomm2",
+daemon(id="export5",
        runInterval="1000",
        terminate="true",      
-       dog("export.json",
+       dog("ids.jsonl",
               batchSize=100,
               topic(checkpointCollection,
                     ecommerce,
-                    q="id:9*",
-                    fl="id,ean",
-                    id="topic_export1",
+                    q="*:*",
+                    fl="id",
+                    id="topic_export5",
                     initialCheckpoint=0
               )
       )
@@ -308,4 +308,142 @@ daemon(id="ecomm2",
 ```
 curl --user solr:SolrRocks -X GET  -H 'Content-Type: application/json' "http://localhost:8983/solr/ecommerce/stream?action=list"
 
+```
+
+
+# make a worker
+
+Need to grab the first node and then use it.
+
+```
+curl --user solr:SolrRocks -X GET  -H 'Content-Type: application/json' "http://localhost:8983/solr/admin/collections?action=CREATE&name=checkpointCollection&numShards=1&collection.configName=_default&waitForFinalState=true"
+
+curl --user solr:SolrRocks -X GET  -H 'Content-Type: application/json' "http://localhost:8983/solr/admin/collections?action=CREATE&name=worker&numShards=1&collection.configName=_default&waitForFinalState=true"
+
+curl --user solr:SolrRocks -X GET  -H 'Content-Type: application/json' "http://localhost:8983/solr/admin/collections?action=CREATE&name=worker&numShards=1&createNodeSet=192.168.192.7:8983_solr&collection.configName=_default&waitForFinalState=true"
+
+curl --user solr:SolrRocks -X POST -H 'Content-type:application/json'  -d '{
+  "add-expressible": {
+    "name": "dog",
+    "class": "com.o19s.solr.streaming.DogStream"
+  }
+}' http://localhost:8983/solr/worker/config
+
+```
+
+WE SHOULD UPDATE ABOUT USING WORKER SO YOU CAN HAVE PREDICTABLE PLACE FOR DAEMONS ETC!!!!
+
+
+192.168.144.7:8983_solr
+
+
+#  Do IDS get exported in predictable order?
+Well, they are NOT in order, but they are repeateable.  I think this is becasue we are sorting by the underlying Lucene doc version, not the actual ID.  Just run this command twice (changing up the ids and the file name to see!)
+
+```
+daemon(id="export_ids_1",
+       runInterval="1000",
+       terminate="true",      
+       dog("export_ids_1.jsonl",
+              batchSize=100,
+              topic(checkpointCollection,
+                    ecommerce,
+                    q="*:*",
+                    fl="id",
+                    id="export_ids_1",
+                    initialCheckpoint=0
+              )
+      )
+)
+```
+
+
+Okay, can we use a sort on ID?
+NOPE!  No sort on topic() ;-()
+```
+daemon(id="export_ids_1",
+       runInterval="1000",
+       terminate="true",      
+       dog("export_ids_1.jsonl",
+              batchSize=100,
+              topic(checkpointCollection,
+                    ecommerce,
+                    q="*:*",
+                    fl="id",
+                    sort="id ASC",
+                    id="export_ids_1",
+                    initialCheckpoint=0
+              )
+      )
+)
+```
+
+Time to get crazy.  We topic stream out just the ids, feeding them through a sort....  yep, all ids in memory.
+
+```
+daemon(id="sorted_ids_1",
+       runInterval="1000",
+       terminate="true",      
+       dog("sorted_ids_1.jsonl",
+              batchSize=100,
+              sort(
+                topic(checkpointCollection,
+                      ecommerce,
+                      q="*:*",
+                      fl="id",
+                      sort="id ASC",
+                      id="sorted_ids_1",
+                      initialCheckpoint=0
+                ),
+                by="id asc"
+              )
+      )
+)
+```
+
+
+Okay, can we add in a fetch?
+
+```
+daemon(id="sorted_ids_main_data_2",
+       runInterval="1000",
+       terminate="true",      
+       dog("sorted_ids_main_data_2.jsonl",
+              batchSize=100,
+              fetch(ecommerce,
+                sort(
+                  topic(checkpointCollection,
+                        ecommerce,
+                        q="id:9*",
+                        fl="id",
+                        sort="id ASC",
+                        id="sorted_ids_main_data_2",
+                        initialCheckpoint=0
+                  ),
+                  by="id asc"
+                ),
+                fl="id,name,title,ean,price,short_description,img_high,img_low,img_500x500,img_thumb,date_released,supplier",
+                on="id=id"
+              )
+      )
+)
+```
+
+
+```
+curl --user solr:SolrRocks -X GET  -H 'Content-Type: application/json' "http://localhost:8983/solr/worker/stream?action=list"
+```
+
+
+Fetching is producing this, due to how Chorus is setup we add dismax etc...  blowing it up.
+
+q={! df=id q.op=OR cache=false } 900682 900696 901601 901826 902136 903638 904547 904584 904590 904631 904792 904802 905467 905473 907066 907270 908341 90841 91356 91424 915112 91578 916396 916547 916816 918393 918797 918807 918813 91949 919648 919660 919714 920624 92065 923852 925984 934080 93582 937166 938080 938296 941796 94372 9460 94945 94979 9514 95939 96613&distrib=false&fl=id,name,title,ean,price,short_description,img_high,img_low,img_500x500,img_thumb,date_released,supplier,_version_&sort=_version_ desc&rows=50&wt=json&version=2.2
+
+```
+curl --user solr:SolrRocks -X GET  -H 'Content-Type: application/json' "http://localhost:8983/api/collections/ecommerce/get?id=900682"
+```
+
+Lets grab all of them!
+```
+curl --user solr:SolrRocks -X GET  -H 'Content-Type: application/json' "http://localhost:8983/api/collections/ecommerce/get?ids=900682,900696,901601,901826,902136,903638,904547,904584,904590,904631,904792,904802,905467,905473,907066,907270,908341,90841,91356,91424,915112,91578,916396,916547,916816,918393,918797,918807,918813,91949,919648,919660,919714,920624,92065,923852,925984,934080,93582,937166,938080,938296,941796,94372,9460,94945,94979,9514,95939,96613"
 ```
