@@ -20,10 +20,8 @@ package fork.org.tallison.tikaeval.example;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -85,7 +83,7 @@ public class TikaServerClient implements TikaClient {
         RESPONSE_SERVER_UNAVAILABLE,
         RESPONSE_BAD_ENTITY,
         RESPONSE_SUCCESS,
-        INTERRUPTED_EXCEPTION;
+        INTERRUPTED_EXCEPTION
     }
 
     public TikaServerClient(INPUT_METHOD inputMethod, String ... urls) {

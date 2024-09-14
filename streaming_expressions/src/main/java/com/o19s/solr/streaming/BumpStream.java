@@ -46,7 +46,7 @@ public class BumpStream extends TupleStream implements Expressible {
 	private PushBackStream tupleSource;
 	private transient SolrClientCache cache;
 	private transient CloudSolrClient cloudSolrClient;
-	private List<SolrInputDocument> documentBatch = new ArrayList();
+	private final List<SolrInputDocument> documentBatch = new ArrayList();
 	private String coreName;
 
 	public BumpStream(StreamExpression expression, StreamFactory factory) throws IOException {
@@ -233,7 +233,7 @@ public class BumpStream extends TupleStream implements Expressible {
 		}
 	}
 
-	private String extractBumpFieldName(StreamExpression expression, StreamFactory factory) throws IOException {
+	private String extractBumpFieldName(StreamExpression expression, StreamFactory factory) {
 		StreamExpressionNamedParameter bumpFieldNameParameter = factory.getNamedOperand(expression, "field");
 		if (null == bumpFieldNameParameter) {
 			return "bump";
@@ -244,7 +244,7 @@ public class BumpStream extends TupleStream implements Expressible {
 		return null;
 	}
 	
-	private String extractIDFieldName(StreamExpression expression, StreamFactory factory) throws IOException {
+	private String extractIDFieldName(StreamExpression expression, StreamFactory factory) {
 		StreamExpressionNamedParameter idFieldNameParameter = factory.getNamedOperand(expression, "id");
 		if (null == idFieldNameParameter) {
 			return "id";

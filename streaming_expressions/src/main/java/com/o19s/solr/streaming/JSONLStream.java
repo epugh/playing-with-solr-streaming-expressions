@@ -35,7 +35,6 @@ import org.apache.solr.client.solrj.io.stream.expr.StreamExplanation;
 import org.apache.solr.client.solrj.io.stream.expr.StreamExpression;
 import org.apache.solr.client.solrj.io.stream.expr.StreamFactory;
 
-import org.noggit.JSONParser;
 import org.noggit.ObjectBuilder;
 
 public class JSONLStream extends TupleStream implements Expressible {
@@ -62,7 +61,7 @@ public class JSONLStream extends TupleStream implements Expressible {
     init(factory.constructStream(streamExpressions.get(0)));
   }
 
-  private void init(TupleStream stream) throws IOException{
+  private void init(TupleStream stream){
     this.originalStream = stream;
   }
 
@@ -143,7 +142,7 @@ public class JSONLStream extends TupleStream implements Expressible {
 
       Tuple out = new Tuple((Map)o);
       
-      // Set a id based on the file and the line number if we don't have one defined already.
+      // Set the id based on the file and the line number if we don't have one defined already.
       if (out.get("id") == null) {
     	  out.put("id", file+"_"+lineNumber);
       }

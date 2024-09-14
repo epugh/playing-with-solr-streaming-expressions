@@ -18,7 +18,6 @@ package fork.org.tallison.tikaeval.example;
  */
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 import org.apache.tika.io.TikaInputStream;

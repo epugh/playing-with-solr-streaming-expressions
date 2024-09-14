@@ -109,7 +109,7 @@ public class SpacyNERecogniser implements NERecogniser {
 
 	/**
 	 * @return {@code true} if server endpoint is available. returns {@code false}
-	 *         if server endpoint is not avaliable for service.
+	 *         if server endpoint is not available for requests.
 	 */
 	public boolean isAvailable() {
 		return available;

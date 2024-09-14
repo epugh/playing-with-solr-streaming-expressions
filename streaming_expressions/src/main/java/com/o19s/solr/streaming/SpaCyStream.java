@@ -111,7 +111,7 @@ public class SpaCyStream extends TupleStream implements Expressible {
 		init(spacyUrl, stream, fl, model);
 	}
 
-	private void init(String spacyUrl, TupleStream tupleStream, String fl, String model) throws IOException {
+	private void init(String spacyUrl, TupleStream tupleStream, String fl, String model) {
 		this.spacyUrl = spacyUrl;
 		this.stream = tupleStream;
 		this.fl = fl;
@@ -123,7 +123,7 @@ public class SpaCyStream extends TupleStream implements Expressible {
 	public List<TupleStream> children() {
 		List<TupleStream> l = new ArrayList<>();
 		l.add(stream);
-		;
+
 		return l;
 	}
 
@@ -209,10 +209,9 @@ public class SpaCyStream extends TupleStream implements Expressible {
 	 * @return map of entity type -&gt; set of names
 	 * @throws IOException
 	 * @throws ClientProtocolException
-	 * @throws ParseException
 	 */
 	public List<Map<String, String>> recognise(String text)
-			throws ClientProtocolException, IOException, ParseException {
+			throws ClientProtocolException, IOException {
 		List<Map<String, String>> entities = new ArrayList<>();
 
 		text = text.replace("\n", " ").replace("\r", " ").replace("\"", ""); // Spacy API doesn't like CRLF

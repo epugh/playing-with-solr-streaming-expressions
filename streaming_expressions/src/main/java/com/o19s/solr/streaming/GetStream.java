@@ -1,6 +1,5 @@
 package com.o19s.solr.streaming;
 
-import static org.apache.solr.common.params.CommonParams.SORT;
 import static org.apache.solr.common.params.CommonParams.VERSION_FIELD;
 
 /*
@@ -75,7 +74,7 @@ public class GetStream extends TupleStream implements Expressible {
   private boolean appendVersion = true;
   private boolean appendKey = true;
 
-  public GetStream(String zkHost, String collection, TupleStream tupleStream, String on, String fieldList, int batchSize) throws IOException {
+  public GetStream(String zkHost, String collection, TupleStream tupleStream, String on, String fieldList, int batchSize) {
     init(zkHost, collection, tupleStream, on, fieldList, batchSize);
   }
 
@@ -131,7 +130,7 @@ public class GetStream extends TupleStream implements Expressible {
     init(zkHost, collectionName, stream, on, fl, batchSize);
   }
 
-  private void init(String zkHost, String collection, TupleStream tupleStream, String on, String fieldList, int batchSize) throws IOException{
+  private void init(String zkHost, String collection, TupleStream tupleStream, String on, String fieldList, int batchSize){
     this.zkHost = zkHost;
     this.collection = collection;
     this.stream = tupleStream;
@@ -139,7 +138,7 @@ public class GetStream extends TupleStream implements Expressible {
     this.fields = fieldList.split(",");
     this.fieldList = fieldList;
 
-    if(on.indexOf("=") > -1) {
+    if(on.contains("=")) {
       String[] leftright = on.split("=");
       leftKey = leftright[0].trim();
       rightKey = leftright[1].trim();
@@ -305,7 +304,7 @@ public class GetStream extends TupleStream implements Expressible {
   }
 
   private String appendFields() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     if(appendKey) {
       buf.append(",");
       buf.append(rightKey);
