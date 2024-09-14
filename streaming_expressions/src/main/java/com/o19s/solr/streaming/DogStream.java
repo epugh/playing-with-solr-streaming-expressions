@@ -2,7 +2,6 @@ package com.o19s.solr.streaming;
 
 import java.io.FileOutputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -23,14 +22,12 @@ import java.io.OutputStreamWriter;
  * limitations under the License.
  */
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Map.Entry;
 import java.io.Writer;
 import java.lang.invoke.MethodHandles;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -39,13 +36,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.zip.GZIPOutputStream;
 
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.CloudSolrClient;
-import org.apache.solr.client.solrj.impl.CloudSolrClient.Builder;
-import org.apache.solr.client.solrj.io.SolrClientCache;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.io.Tuple;
 import org.apache.solr.client.solrj.io.comp.StreamComparator;
 import org.apache.solr.client.solrj.io.stream.PushBackStream;
@@ -65,16 +58,14 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.SolrInputField;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.core.SolrCore;
-import org.apache.solr.core.SolrResourceLoader;
 import org.noggit.CharArr;
 import org.noggit.JSONWriter;
-import org.apache.solr.common.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Sends tuples emitted by a wrapped {@link TupleStream} to disk in the
- * userfiles.
+ * user files directory.
  * 
  * @since 6.0.0
  */
@@ -93,13 +84,13 @@ public class DogStream extends TupleStream implements Expressible {
 	 * <code>"pruneVersionField"</code> named operand, defaults to the value
 	 * returned by {@link #defaultPruneVersionField()}
 	 */
-	private boolean pruneVersionField;
+	private final boolean pruneVersionField;
 	private int batchNumber;
 	private long totalDocsIndex;
 	private PushBackStream tupleSource;
 	// private transient SolrClientCache cache;
 	// private transient CloudSolrClient cloudSolrClient;
-	private List<SolrInputDocument> documentBatch = new ArrayList<>();
+	private final List<SolrInputDocument> documentBatch = new ArrayList<>();
 	private String coreName; // if we ever shard the writing process out to multiple workers???
 
 	// Solr 9
@@ -107,7 +98,7 @@ public class DogStream extends TupleStream implements Expressible {
 	// Solr 8
 	// private String chroot;
 
-	private CharArr charArr = new CharArr(1024 * 2);
+	private final CharArr charArr = new CharArr(1024 * 2);
 	JSONWriter jsonWriter = new JSONWriter(charArr, -1);
 	private Writer writer;
 	private OutputStream fos;
@@ -287,9 +278,8 @@ public class DogStream extends TupleStream implements Expressible {
 	@Override
 	public Explanation toExplanation(StreamFactory factory) throws IOException {
 
-		// An dog stream is backward wrt the order in the explanation. This stream is
-		// the "child"
-		// while the file we're saving is the parent.
+		// A dog stream is backward wrt the order in the explanation. This stream is
+		// the "child" while the file we're saving is the parent.
 
 		StreamExplanation explanation = new StreamExplanation(getStreamNodeId() + "-datastore");
 
@@ -318,9 +308,10 @@ public class DogStream extends TupleStream implements Expressible {
 		final SolrCore core = (SolrCore) context.get("solr-core");
 
 		// Solr 9
-		// this.chroot = core.getCoreContainer().getUserFilesPath();
+		 this.chroot = core.getCoreContainer().getUserFilesPath();
 		// Solr 8
-		this.chroot = Paths.get(core.getCoreContainer().getSolrHome(), SolrResourceLoader.USER_FILES_DIRECTORY);
+		//this.chroot = Paths.get(core.getCoreContainer().getSolrHome(), SolrResourceLoader.USER_FILES_DIRECTORY);
+
 
 		if (!Files.exists(chroot)) {
 			throw new IllegalStateException(
@@ -366,17 +357,15 @@ public class DogStream extends TupleStream implements Expressible {
 	SolrInputDocument convertTupleToSolrInputDocument(Tuple tuple) {
 		SolrInputDocument doc = new SolrInputDocument();
 		// Solr 8 version of tuple handling
-		for (Object field : tuple.fields.keySet()) {
-
-			if (!(((String)field).equals(CommonParams.VERSION_FIELD) && pruneVersionField)) {
-				Object value = tuple.get(field);
+		for (String field : tuple.getFields().keySet())
+			if (!(field.equals(CommonParams.VERSION_FIELD) && pruneVersionField)) {
+				Object value = tuple.getString(field);
 				if (value instanceof List) {
-					addMultivaluedField(doc, (String)field, (List<?>) value);
+					addMultivaluedField(doc, field, (List<?>) value);
 				} else {
-					doc.addField((String)field, value);
+					doc.addField(field, value);
 				}
 			}
-		}
 		log.debug("Tuple [{}] was converted into SolrInputDocument [{}].", tuple, doc);
 
 		return doc;

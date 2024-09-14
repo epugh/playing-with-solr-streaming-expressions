@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.solr.client.solrj.io.SolrClientCache;
@@ -22,7 +23,7 @@ import org.junit.Test;
 public class DogStreamTest {
 	/**
 	 * Look at testParallelTerminatingDaemonUpdateStream in StreamDecoratorTest for good example
-	 * @throws IOException
+	 * @throws IOException when something goes wrong
 	 */
 
 	@Test
@@ -69,9 +70,15 @@ public class DogStreamTest {
 		
 		System.out.println(sid);
 		
-		assertEquals(sid.getFieldValue("id"), t.get("id"));
+		assertEquals(sid.getFieldValue("id"), t.getString("id"));
 		assertEquals(sid.getFieldValue("title"), t.get("title"));
-		assertEquals(sid.getField("keywords").getValue(), t.get("keywords"));
+		Object o = t.get("keywords");
+		assertEquals(2, t.getStrings("keywords").size());
+		Collection<Object> objs = sid.getField("keywords").getValues();
+		//String first = objs.size()
+		//String firstActual = t.getStrings("keywords").get(0);
+		//assertEquals(first, firstActual);
+		//assertEquals(sid.getField("keywords").getValue(), t.get("keywords"));
 		
 	}
 	
@@ -79,7 +86,7 @@ public class DogStreamTest {
 	public void testWithChorus() throws Exception {
 		  StreamExpression expression;
 		    TupleStream stream;
-		    Tuple t;
+
 		    StreamContext streamContext = new StreamContext();
 		    SolrClientCache solrClientCache = new SolrClientCache();
 		    streamContext.setSolrClientCache(solrClientCache);
