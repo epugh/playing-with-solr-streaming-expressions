@@ -405,10 +405,10 @@ daemon(id="sorted_ids_1",
 Okay, can we add in a fetch?
 
 ```
-daemon(id="sorted_ids_main_data_2",
+daemon(id="sorted_ids_main_data_3",
        runInterval="1000",
        terminate="true",      
-       dog("sorted_ids_main_data_2.jsonl",
+       dog("sorted_ids_main_data_3.jsonl",
               batchSize=100,
               fetch(ecommerce,
                 sort(
@@ -417,7 +417,7 @@ daemon(id="sorted_ids_main_data_2",
                         q="id:9*",
                         fl="id",
                         sort="id ASC",
-                        id="sorted_ids_main_data_2",
+                        id="sorted_ids_main_data_3",
                         initialCheckpoint=0
                   ),
                   by="id asc"
@@ -446,4 +446,58 @@ curl --user solr:SolrRocks -X GET  -H 'Content-Type: application/json' "http://l
 Lets grab all of them!
 ```
 curl --user solr:SolrRocks -X GET  -H 'Content-Type: application/json' "http://localhost:8983/api/collections/ecommerce/get?ids=900682,900696,901601,901826,902136,903638,904547,904584,904590,904631,904792,904802,905467,905473,907066,907270,908341,90841,91356,91424,915112,91578,916396,916547,916816,918393,918797,918807,918813,91949,919648,919660,919714,920624,92065,923852,925984,934080,93582,937166,938080,938296,941796,94372,9460,94945,94979,9514,95939,96613"
+```
+
+Okay, I fixed Chorus, so now this is working:
+
+```
+daemon(id="sorted_ids_main_data_4",
+       runInterval="1000",
+       terminate="true",      
+       dog("sorted_ids_main_data_4.jsonl",
+              batchSize=100,
+              fetch(ecommerce,
+                sort(
+                  topic(checkpointCollection,
+                        ecommerce,
+                        q="*:*",
+                        fl="id",
+                        sort="id ASC",
+                        id="sorted_ids_main_data_4",
+                        initialCheckpoint=0
+                  ),
+                  by="id asc"
+                ),
+                fl="id,name,title,ean,price,short_description,img_high,img_low,img_500x500,img_thumb,date_released,supplier",
+                on="id=id"
+              )
+      )
+)
+```
+
+and lets get the attributes
+
+```
+daemon(id="sorted_ids_attr_data_5",
+       runInterval="1000",
+       terminate="true",      
+       dog("sorted_ids_attr_data_5.jsonl",
+              batchSize=100,
+              fetch(ecommerce,
+                sort(
+                  topic(checkpointCollection,
+                        ecommerce,
+                        q="*:*",
+                        fl="id",
+                        sort="id ASC",
+                        id="sorted_ids_attr_data_5",
+                        initialCheckpoint=0
+                  ),
+                  by="id asc"
+                ),
+                fl="id,attr_*",
+                on="id=id"
+              )
+      )
+)
 ```
