@@ -16,7 +16,7 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
-    <junit.version>4.11</junit.version>
+    <junit.version>4.13.1</junit.version>
     <slf4j.version>1.7.7</slf4j.version>
     <solr.version>9.7.0</solr.version>
     <tika.version>1.24</tika.version>
